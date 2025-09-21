@@ -13,7 +13,7 @@ from pydantic import BaseModel, AnyHttpUrl, Field, ConfigDict
 
 app = FastAPI(title="Simple API Proxy with IP Blacklist")
 
-# ====== СЕКРЕТНЫЙ КЛЮЧ ПОДКЛЮЧЕНИЯ (нужно заменить ниже) ======
+# ====== SECRET CONNECTION KEY (must be replaced below) ======
 SECRET_IN_CODE = "CHANGE_ME"
 
 if len(SECRET_IN_CODE) != 128:
