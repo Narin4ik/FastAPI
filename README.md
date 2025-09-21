@@ -8,8 +8,6 @@
 A minimal, security-minded HTTP proxy built with **FastAPI** and **httpx**.  
 It forwards requests to a specified target URL **only if** the caller supplies a valid **128-character secret** and passes host checks. The app also **auto-blacklists** IPs after repeated failed attempts and supports a simple **allowlist** for target hosts.
 
----
-
 ## ✨ Features
 
 - **Header secret check**: Requests must include a 128-char `X-Proxy-Secret` (constant or env).
@@ -21,8 +19,6 @@ It forwards requests to a specified target URL **only if** the caller supplies a
 - **Flexible payloads**: Supports JSON or form/bytes via `json` or `data`.
 - **Per-request timeout**: Default `15s`, adjustable per call.
 - **Endpoints**: `/health`, `/proxy`.
-
----
 
 ## 🧩 Request Model (JSON body)
 
