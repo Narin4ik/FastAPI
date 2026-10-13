@@ -1,8 +1,8 @@
-# FastAPI
-fastapi==0.116.1
-# ASGI server
-uvicorn==0.35.0
-# HTTP client
+fastapi==0.143.0
+starlette==1.8.0
+uvicorn==0.54.0
 httpx==0.28.1
-# Model validation
-pydantic==2.11.1
+httpcore==1.0.9
+h11==0.16.0
+pydantic==2.14.1
+websockets==17.2
