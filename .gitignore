@@ -416,3 +416,15 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Python relay local state
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+blacklist.txt
+*.pem
+*.key
