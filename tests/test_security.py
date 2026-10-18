@@ -33,6 +33,22 @@ def test_invalid_settings(keys):
         Settings(keys=keys)
 
 
+def test_discord_regional_gateway_resume_hosts(settings):
+    assert settings.allows_host("gateway-us-east1-c.discord.gg")
+    assert settings.allows_host("gateway-eu-west1-b.discord.gg")
+    assert settings.allows_host("gateway.discord.gg")
+    for host in (
+        "gateway-.discord.gg",
+        "gateway-evil.discord.gg.attacker.test",
+        "evilgateway-us-east1-c.discord.gg",
+        "gateway-us-east1-c.discord.gg.evil.test",
+        "unrelated.discord.gg",
+    ):
+        assert not settings.allows_host(host)
+    restricted = replace(settings, allowed_hosts=("api.telegram.org",))
+    assert not restricted.allows_host("gateway-us-east1-c.discord.gg")
+
+
 def test_expiring_auth_blocks_and_bounded_memory(settings, monkeypatch):
     now = [0.0]
     monkeypatch.setattr("relay.security.time.monotonic", lambda: now[0])
