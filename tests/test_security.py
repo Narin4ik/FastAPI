@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import ExitStack
 from dataclasses import replace
 
 import httpcore
@@ -49,6 +50,27 @@ def test_expiring_auth_blocks_and_bounded_memory(settings, monkeypatch):
         with pytest.raises(HTTPException):
             access.authenticate(Headers(), ip)
     assert len(access.failures) == 2
+
+
+def test_zero_disables_request_limits(settings):
+    unlimited = replace(settings, max_concurrent=0, max_per_key=0, requests_per_minute=0,
+                        max_request_bytes=0, max_response_bytes=0)
+    access = AccessControl(unlimited)
+    for _ in range(130):
+        assert access.authenticate(Headers(AUTH), "ip") == "bot"
+    assert not access.rates
+    with ExitStack() as stack:
+        for _ in range(80):
+            stack.enter_context(access.slot("bot"))
+        assert access.total == 80
+    assert access.total == 0
+
+
+@pytest.mark.parametrize("field", ["max_concurrent", "max_per_key", "requests_per_minute",
+                                    "max_request_bytes", "max_response_bytes"])
+def test_negative_limits_rejected(field):
+    with pytest.raises(ValueError):
+        Settings(keys={"bot": "a" * 64}, **{field: -1})
 
 
 def test_slots_released_after_error(settings):
