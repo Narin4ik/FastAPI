@@ -148,7 +148,11 @@ class PinnedTransport(httpx.AsyncBaseTransport):
         self.pool = httpcore.AsyncConnectionPool(
             network_backend=self.backend,
             max_connections=policy.settings.max_concurrent or None,
-            max_keepalive_connections=(min(20, policy.settings.max_concurrent) if policy.settings.max_concurrent > 0 else 20),
+            max_keepalive_connections=(
+                min(20, policy.settings.max_concurrent)
+                if policy.settings.max_concurrent > 0
+                else 20
+            ),
         )
 
     async def handle_async_request(self, request):
