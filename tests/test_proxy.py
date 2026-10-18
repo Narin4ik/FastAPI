@@ -213,13 +213,14 @@ def test_unlimited_request_and_response_bytes(client_factory):
         assert req.content == sent
         return httpx.Response(200, stream=httpx.ByteStream(returned))
 
-    client = client_factory(handler, max_request_bytes=0, max_response_bytes=0,
-                            requests_per_minute=0)
+    client = client_factory(
+        handler, max_request_bytes=0, max_response_bytes=0, requests_per_minute=0
+    )
     for _ in range(3):
         response = client.post(
-            "/proxy", headers=AUTH,
-            json={"url": URL, "method": "POST",
-                  "body_base64": base64.b64encode(sent).decode()},
+            "/proxy",
+            headers=AUTH,
+            json={"url": URL, "method": "POST", "body_base64": base64.b64encode(sent).decode()},
         )
         assert response.status_code == 200
         assert response.content == returned
