@@ -110,7 +110,8 @@ class AccessControl:
     @contextmanager
     def slot(self, key_id: str):
         if (self.settings.max_concurrent > 0 and self.total >= self.settings.max_concurrent) or (
-            self.settings.max_per_key > 0 and self.active.get(key_id, 0) >= self.settings.max_per_key
+            self.settings.max_per_key > 0
+            and self.active.get(key_id, 0) >= self.settings.max_per_key
         ):
             raise HTTPException(429, "Connection limit exceeded", headers={"Retry-After": "5"})
         self.total += 1
