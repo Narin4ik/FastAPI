@@ -171,7 +171,10 @@ async def pump_tunnel(websocket, reader, writer, settings):
         await asyncio.gather(*tasks, return_exceptions=True)
         logging.getLogger("uvicorn.error").info(
             "Tunnel closed: reason=%s duration=%.1fs to_target=%d to_client=%d",
-            reason, time.monotonic() - started, to_target_bytes, to_client_bytes,
+            reason,
+            time.monotonic() - started,
+            to_target_bytes,
+            to_client_bytes,
         )
 
 
@@ -317,7 +320,9 @@ def create_app(settings: Settings | None = None, *, transport=None):
         except HTTPException as error:
             if error.status_code >= 500:
                 logging.getLogger("uvicorn.error").warning(
-                    "Tunnel target unavailable: status=%d reason=%s", error.status_code, error.detail
+                    "Tunnel target unavailable: status=%d reason=%s",
+                    error.status_code,
+                    error.detail,
                 )
             with contextlib.suppress(RuntimeError, OSError, WebSocketDisconnect):
                 await websocket.close(1008, "Tunnel rejected")
