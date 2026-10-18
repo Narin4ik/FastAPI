@@ -133,7 +133,7 @@ var response = await relayHttp.PostAsJsonAsync("/proxy", new {
 
 ## Разрешённые направления и лимиты
 
-По умолчанию доступны `discord.com`, `gateway.discord.gg`, `*.gateway.discord.gg`, `cdn.discordapp.com`, `media.discordapp.net`, `api.telegram.org`. Wildcard распространяется только на поддомены указанного домена, а не на похожие названия. Resume-хосты Discord разрешаются в пределах `*.gateway.discord.gg`.
+По умолчанию доступны `discord.com`, `gateway.discord.gg`, `*.gateway.discord.gg`, `cdn.discordapp.com`, `media.discordapp.net`, `api.telegram.org`. Wildcard распространяется только на поддомены указанного домена, а не на похожие названия. При наличии `gateway.discord.gg` в списке дополнительно разрешаются региональные Discord Resume-хосты формата `gateway-*.discord.gg` (например `gateway-us-east1-c.discord.gg`), но не произвольные поддомены `discord.gg`. При ручном задании `ALLOWED_HOSTS` обязательно оставьте `gateway.discord.gg`.
 
 `ALLOWED_HOSTS` полностью заменяет список. Для другого API добавьте его точный домен; пустой список и `*` отклоняются. Только HTTPS/TCP 443; IP-литералы, loopback, private, link-local, multicast, IPv6 transition-адреса и смешанные DNS-ответы с внутренним IP блокируются. DNS проверяется на каждом новом исходящем соединении, после чего соединение открывается по проверенному IP с оригинальным TLS SNI и проверкой сертификата.
 
