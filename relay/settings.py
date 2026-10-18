@@ -30,11 +30,11 @@ class Settings:
     keys: dict[str, str]
     allowed_hosts: tuple[str, ...] = DEFAULT_HOSTS
     require_tls: bool = True
-    max_request_bytes: int = 2 * 1024 * 1024
-    max_response_bytes: int = 8 * 1024 * 1024
-    max_concurrent: int = 64
-    max_per_key: int = 16
-    requests_per_minute: int = 120
+    max_request_bytes: int = 0
+    max_response_bytes: int = 0
+    max_concurrent: int = 0
+    max_per_key: int = 0
+    requests_per_minute: int = 0
     max_tracking_entries: int = 4096
     failed_threshold: int = 5
     failed_window_seconds: int = 600
@@ -75,6 +75,10 @@ class Settings:
             "max_concurrent",
             "max_per_key",
             "requests_per_minute",
+        ):
+            if getattr(self, name) < 0:
+                raise ValueError(f"{name} cannot be negative")
+        for name in (
             "max_tracking_entries",
             "failed_threshold",
             "failed_window_seconds",
