@@ -53,8 +53,14 @@ def test_expiring_auth_blocks_and_bounded_memory(settings, monkeypatch):
 
 
 def test_zero_disables_request_limits(settings):
-    unlimited = replace(settings, max_concurrent=0, max_per_key=0, requests_per_minute=0,
-                        max_request_bytes=0, max_response_bytes=0)
+    unlimited = replace(
+        settings,
+        max_concurrent=0,
+        max_per_key=0,
+        requests_per_minute=0,
+        max_request_bytes=0,
+        max_response_bytes=0,
+    )
     access = AccessControl(unlimited)
     for _ in range(130):
         assert access.authenticate(Headers(AUTH), "ip") == "bot"
@@ -66,8 +72,16 @@ def test_zero_disables_request_limits(settings):
     assert access.total == 0
 
 
-@pytest.mark.parametrize("field", ["max_concurrent", "max_per_key", "requests_per_minute",
-                                    "max_request_bytes", "max_response_bytes"])
+@pytest.mark.parametrize(
+    "field",
+    [
+        "max_concurrent",
+        "max_per_key",
+        "requests_per_minute",
+        "max_request_bytes",
+        "max_response_bytes",
+    ],
+)
 def test_negative_limits_rejected(field):
     with pytest.raises(ValueError):
         Settings(keys={"bot": "a" * 64}, **{field: -1})
