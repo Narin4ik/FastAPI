@@ -119,33 +119,36 @@ class RequestGuard:
 
 
 async def pump_tunnel(websocket, reader, writer, settings):
-    last_activity = time.monotonic()
+    started = last_activity = time.monotonic()
+    to_target_bytes = to_client_bytes = 0
 
     async def to_target():
-        nonlocal last_activity
+        nonlocal last_activity, to_target_bytes
         while True:
             message = await websocket.receive()
             if message["type"] == "websocket.disconnect":
-                return
+                return "client_disconnect"
             data = message.get("bytes")
             if data is None:
                 await websocket.close(1003, "Binary frames required")
-                return
+                return "text_frame"
             if len(data) > settings.max_frame_bytes:
                 await websocket.close(1009, "Frame too large")
-                return
+                return "frame_too_large"
             if data:
                 last_activity = time.monotonic()
+                to_target_bytes += len(data)
                 writer.write(data)
                 await writer.drain()
 
     async def to_client():
-        nonlocal last_activity
+        nonlocal last_activity, to_client_bytes
         while True:
             data = await reader.read(settings.max_frame_bytes)
             if not data:
-                return
+                return "target_eof"
             last_activity = time.monotonic()
+            to_client_bytes += len(data)
             await websocket.send_bytes(data)
 
     async def watchdog():
@@ -154,19 +157,31 @@ async def pump_tunnel(websocket, reader, writer, settings):
             await asyncio.sleep(min(5, settings.tunnel_idle_seconds))
             if time.monotonic() - last_activity >= settings.tunnel_idle_seconds:
                 await websocket.close(1000, "Idle timeout")
-                return
+                return "idle_timeout"
 
     tasks = [asyncio.create_task(coro()) for coro in (to_target, to_client, watchdog)]
+    reason = "max_lifetime"
     try:
         done, _ = await asyncio.wait(
             tasks, timeout=settings.tunnel_max_seconds, return_when=asyncio.FIRST_COMPLETED
         )
         for task in done:
-            task.result()
+            try:
+                reason = task.result()
+            except (WebSocketDisconnect, OSError, RuntimeError) as error:
+                reason = type(error).__name__
+                raise
     finally:
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+        logging.getLogger("uvicorn.error").info(
+            "Tunnel closed: reason=%s duration=%.1fs to_target=%d to_client=%d",
+            reason,
+            time.monotonic() - started,
+            to_target_bytes,
+            to_client_bytes,
+        )
 
 
 def create_app(settings: Settings | None = None, *, transport=None):
@@ -308,7 +323,13 @@ def create_app(settings: Settings | None = None, *, transport=None):
                 await websocket.accept()
                 accepted = True
                 await pump_tunnel(websocket, reader, writer, cfg)
-        except HTTPException:
+        except HTTPException as error:
+            if error.status_code >= 500:
+                logging.getLogger("uvicorn.error").warning(
+                    "Tunnel target unavailable: status=%d reason=%s",
+                    error.status_code,
+                    error.detail,
+                )
             with contextlib.suppress(RuntimeError, OSError, WebSocketDisconnect):
                 await websocket.close(1008, "Tunnel rejected")
         except (WebSocketDisconnect, OSError, RuntimeError):
