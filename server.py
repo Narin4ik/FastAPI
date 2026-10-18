@@ -72,7 +72,10 @@ class RequestGuard:
                     try:
                         if int(length) < 0:
                             raise ValueError
-                        too_large = settings.max_request_bytes > 0 and int(length) > settings.max_request_bytes
+                        too_large = (
+                            settings.max_request_bytes > 0
+                            and int(length) > settings.max_request_bytes
+                        )
                     except ValueError:
                         raise HTTPException(400, "Invalid content length") from None
                     if too_large:
@@ -85,7 +88,10 @@ class RequestGuard:
                         if message["type"] == "http.disconnect":
                             return False
                         body.extend(message.get("body", b""))
-                        if settings.max_request_bytes > 0 and len(body) > settings.max_request_bytes:
+                        if (
+                            settings.max_request_bytes > 0
+                            and len(body) > settings.max_request_bytes
+                        ):
                             raise HTTPException(413, "Request body too large")
                         if not message.get("more_body", False):
                             return True
