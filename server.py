@@ -72,7 +72,7 @@ class RequestGuard:
                     try:
                         if int(length) < 0:
                             raise ValueError
-                        too_large = int(length) > settings.max_request_bytes
+                        too_large = settings.max_request_bytes > 0 and int(length) > settings.max_request_bytes
                     except ValueError:
                         raise HTTPException(400, "Invalid content length") from None
                     if too_large:
@@ -85,7 +85,7 @@ class RequestGuard:
                         if message["type"] == "http.disconnect":
                             return False
                         body.extend(message.get("body", b""))
-                        if len(body) > settings.max_request_bytes:
+                        if settings.max_request_bytes > 0 and len(body) > settings.max_request_bytes:
                             raise HTTPException(413, "Request body too large")
                         if not message.get("more_body", False):
                             return True
@@ -229,7 +229,7 @@ def create_app(settings: Settings | None = None, *, transport=None):
         upstream = httpx.Request(
             payload.method, payload.url, params=payload.params, headers=headers, **kwargs
         )
-        if len(upstream.content) > cfg.max_request_bytes:
+        if cfg.max_request_bytes > 0 and len(upstream.content) > cfg.max_request_bytes:
             raise HTTPException(413, "Upstream request body too large")
         upstream.extensions["timeout"] = {
             name: timeout for name in ("connect", "read", "write", "pool")
@@ -243,7 +243,7 @@ def create_app(settings: Settings | None = None, *, transport=None):
                     body = bytearray()
                     async for chunk in response.aiter_raw():
                         body.extend(chunk)
-                        if len(body) > cfg.max_response_bytes:
+                        if cfg.max_response_bytes > 0 and len(body) > cfg.max_response_bytes:
                             raise HTTPException(502, "Upstream response too large")
                     # Preserve rate limits and file metadata; no cookies or redirect following.
                     allowed = {
@@ -338,7 +338,7 @@ if __name__ == "__main__":
         ws_max_size=config.max_frame_bytes,
         ws_max_queue=4,
         ws_per_message_deflate=False,
-        limit_concurrency=config.max_concurrent + 16,
+        limit_concurrency=config.max_concurrent + 16 if config.max_concurrent > 0 else None,
         ssl_certfile=os.getenv("TLS_CERT_FILE"),
         ssl_keyfile=os.getenv("TLS_KEY_FILE"),
     )
