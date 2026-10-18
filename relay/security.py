@@ -94,22 +94,23 @@ class AccessControl:
             self._put(self.failures, ip, (count, started, blocked_until))
             raise HTTPException(401, "Invalid or missing relay credentials")
         self.failures.pop(ip, None)
-        count, started = self.rates.get(key_id, (0, now))
-        if now - started >= 60:
-            count, started = 0, now
-        if count >= self.settings.requests_per_minute:
-            raise HTTPException(
-                429,
-                "Rate limit exceeded",
-                headers={"Retry-After": str(max(1, int(60 - now + started)))},
-            )
-        self._put(self.rates, key_id, (count + 1, started))
+        if self.settings.requests_per_minute > 0:
+            count, started = self.rates.get(key_id, (0, now))
+            if now - started >= 60:
+                count, started = 0, now
+            if count >= self.settings.requests_per_minute:
+                raise HTTPException(
+                    429,
+                    "Rate limit exceeded",
+                    headers={"Retry-After": str(max(1, int(60 - now + started)))},
+                )
+            self._put(self.rates, key_id, (count + 1, started))
         return key_id
 
     @contextmanager
     def slot(self, key_id: str):
-        if self.total >= self.settings.max_concurrent or (
-            self.active.get(key_id, 0) >= self.settings.max_per_key
+        if (self.settings.max_concurrent > 0 and self.total >= self.settings.max_concurrent) or (
+            self.settings.max_per_key > 0 and self.active.get(key_id, 0) >= self.settings.max_per_key
         ):
             raise HTTPException(429, "Connection limit exceeded", headers={"Retry-After": "5"})
         self.total += 1
