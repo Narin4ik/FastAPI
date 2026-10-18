@@ -105,9 +105,7 @@ class Settings:
         # Discord uses gateway-<region>-<shard>.discord.gg when resuming sessions.
         # Require the explicitly allowlisted gateway.discord.gg before trusting this family.
         if ("gateway.discord.gg", False) in self._patterns:
-            return re.fullmatch(
-                r"gateway-[a-z0-9]+(?:-[a-z0-9]+)*\.discord\.gg", host
-            ) is not None
+            return re.fullmatch(r"gateway-[a-z0-9]+(?:-[a-z0-9]+)*\.discord\.gg", host) is not None
         return False
 
     @classmethod
